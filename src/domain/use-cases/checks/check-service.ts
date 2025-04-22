@@ -1,4 +1,8 @@
-import { LogEntity, LogLevel } from "../../entities/log.entity";
+import {
+  LogEntity,
+  LogEntityOptions,
+  LogLevel,
+} from "../../entities/log.entity";
 import { LogRepository } from "../../respository/log.repository";
 
 interface CheckServiceUserCase {
@@ -24,17 +28,26 @@ export class CheckService implements CheckServiceUserCase {
    *
    */
   public async execute(url: string): Promise<boolean> {
+    const options: LogEntityOptions = {
+      level: LogLevel.low,
+      message: "",
+      origin: this.constructor.name,
+    };
     try {
       const req = await fetch(url);
 
       if (!req.ok) throw new Error(`Error on check servie ${url}`);
-      const log = new LogEntity(LogLevel.low, `${url} working`);
+      const log = new LogEntity({ ...options, message: `${url} working` });
       this.logRepository.saveLog(log);
       this.successCallback();
 
       return true;
     } catch (error) {
-      const log = new LogEntity(LogLevel.high, `${url} not working: ${error}`);
+      const log = new LogEntity({
+        ...options,
+        level: LogLevel.high,
+        message: `${url} not working: ${error}`,
+      });
       this.logRepository.saveLog(log);
       this.errorCallback(`${error}`);
       return false;
